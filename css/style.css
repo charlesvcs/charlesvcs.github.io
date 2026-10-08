@@ -1,0 +1,506 @@
+:root {
+  --bg: #000000;
+  --ink: #f1f0ec;
+  --ink-soft: #8d8d93;
+  --accent: #eb3f82;
+  --accent-deep: #ff6fa4;
+  --border: color-mix(in srgb, var(--ink) 18%, transparent);
+  --rule: color-mix(in srgb, var(--accent) 55%, transparent);
+  --focus: var(--accent-deep);
+
+  /* Type scale: one display role per page, three label-register tiers.
+     Named by role, not by value — see DESIGN.md Typography. */
+  --display-size: clamp(2.5rem, 8vw, 4rem); /* .name — the one headline */
+  --display-size-page: clamp(2rem, 6vw, 2.75rem); /* .page-title — about/projects */
+  --label-size: clamp(0.85rem, 1.6vw, 0.95rem); /* primary label: context line + nav links */
+  --label-size-title: 0.95rem; /* project-title — a mini-heading, stays full size at every width */
+  --label-size-sm: 0.85rem; /* secondary label: back-link, project description */
+  --label-size-xs: 0.75rem; /* fine print: the card-back license details */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  perspective: 1100px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #000;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 0;
+}
+
+.flip-card {
+  position: relative;
+  width: min(660px, 100%);
+  display: grid;
+  transform-style: preserve-3d;
+  cursor: grab;
+}
+
+.flip-card.is-grabbed {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.card {
+  position: relative;
+  width: min(660px, 100%);
+  padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.75rem, 4.5vw, 2.75rem);
+  border: 1px solid var(--border);
+  text-align: center;
+  cursor: grab;
+}
+
+.card.is-grabbed {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* Nested inside .flip-card, each face fills the shared grid cell and defers its
+   cursor to the wrapper that's actually being dragged. */
+.flip-card .card {
+  grid-area: 1 / 1;
+  width: 100%;
+  backface-visibility: hidden;
+  cursor: inherit;
+}
+
+.card-face--back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+}
+
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  animation: corner-in 0.5s ease 0.75s forwards;
+}
+
+.card::before {
+  top: -7px;
+  left: -7px;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+
+.card::after {
+  bottom: -7px;
+  right: -7px;
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.name {
+  margin: 0;
+  font-size: var(--display-size);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  opacity: 0;
+  transform: translateY(0.4em);
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.mascot {
+  flex: none;
+  width: clamp(56px, 11vw, 84px);
+  height: clamp(56px, 11vw, 84px);
+  object-fit: cover;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.context {
+  margin: 0.9rem auto 0;
+  max-width: 42ch;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size);
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  opacity: 0;
+  transform: translateY(0.4em);
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+}
+
+.context-dim {
+  color: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+  padding: 0 0.35em;
+}
+
+.rule {
+  width: 0%;
+  height: 1px;
+  margin: 1.9rem 0 1.6rem;
+  border: 0;
+  background: var(--rule);
+  animation: extend 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  opacity: 0;
+  transform: translateY(0.4em);
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+}
+
+.link-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.link-group + .link-group {
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size);
+  letter-spacing: 0.01em;
+  padding-bottom: 0.2em;
+  cursor: pointer;
+}
+
+.link-inline {
+  font-size: 1em;
+  padding-bottom: 0;
+}
+
+.link-mark {
+  font-size: 0.8em;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-0.4em);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent-deep);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--accent-deep);
+}
+
+.link:hover .link-mark,
+.link:focus-visible .link-mark {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.link:hover::after,
+.link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes extend {
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes corner-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name,
+  .mascot,
+  .context,
+  .links {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .rule {
+    animation: none;
+    width: 100%;
+  }
+
+  .card::before,
+  .card::after {
+    animation: none;
+    opacity: 1;
+  }
+
+  .link-mark,
+  .link::after {
+    transition: none;
+  }
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-sm);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.back-link .link-mark {
+  opacity: 1;
+  transform: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--accent-deep);
+}
+
+.back-link:hover .link-mark,
+.back-link:focus-visible .link-mark {
+  color: var(--accent-deep);
+  transform: translateX(-0.2em);
+}
+
+.page-title {
+  margin: 1.4rem 0 0;
+  font-size: var(--display-size-page);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.project-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.project-title {
+  margin: 0 0 0.4rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-title);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--accent-deep);
+}
+
+.project-desc {
+  margin: 0 auto;
+  max-width: 54ch;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-sm);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.leaderboard-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.leaderboard-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5em;
+  padding: 0.15em 0.6em;
+  border: 1px solid var(--accent);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.05em;
+  color: var(--accent-deep);
+}
+
+.leaderboard-event {
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-sm);
+  color: var(--ink);
+}
+
+.leaderboard-result {
+  margin: 0;
+  max-width: 54ch;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.license-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.license-chip {
+  flex: none;
+  width: 22px;
+  height: 16px;
+  border: 1px solid var(--accent);
+  background-image:
+    linear-gradient(var(--accent) 1px, transparent 1px),
+    linear-gradient(var(--accent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+  background-size: 100% 1px, 100% 1px, 1px 100%;
+  background-position: 0 34%, 0 68%, 50% 0;
+  background-repeat: no-repeat;
+}
+
+.license-label {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.license-mark {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.license-diamond {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
+
+.enac-mark {
+  display: block;
+  width: clamp(120px, 28vw, 164px);
+  height: auto;
+}
+
+.license-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.license-id {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.license-strip {
+  width: min(200px, 60%);
+  height: 8px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ink-soft) 0,
+    var(--ink-soft) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+  opacity: 0.6;
+}
+
+.license-caption {
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 420px) {
+  .links {
+    gap: 0.45rem;
+  }
+
+  .link-group {
+    gap: 0.5rem;
+  }
+
+  .link-group + .link-group {
+    padding-left: 0.45rem;
+  }
+}

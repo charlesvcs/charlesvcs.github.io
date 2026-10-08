@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CharlesVCS</title>
+<meta name="description" content="CharlesVCS — ENAC engineering student, ATC track.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000000'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='34' fill='%23eb3f82' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="flip-card">
+  <main class="card card-face card-face--front">
+    <div class="header">
+      <h1 class="name">CharlesVCS</h1>
+      <img class="mascot" src="giphy.gif" alt="" aria-hidden="true" width="480" height="480">
+    </div>
+    <p class="context">ENAC engineering student <span class="context-dim">/</span> ATC</p>
+    <hr class="rule" aria-hidden="true">
+    <nav class="links" aria-label="Contact">
+      <div class="link-group">
+        <a class="link" href="https://github.com/charlesvcs" target="_blank" rel="noreferrer">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">GitHub</span>
+        </a>
+        <a class="link" href="about.html">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">About</span>
+        </a>
+        <a class="link" href="arts.html">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">Arts</span>
+        </a>
+        <a class="link" href="sciences.html">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">Sciences</span>
+        </a>
+        <a class="link" href="projects.html">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">MCTA</span>
+        </a>
+      </div>
+      <div class="link-group">
+        <!-- data-contact holds the email, base64-encoded; decoded only inside the click handler, so it's never
+             written into href and never appears in the live DOM unless the link is actually clicked -->
+        <a class="link" id="email-link" href="#" data-contact="Y2hhcmxlc3ZlcmNydXlzc2U4MzUwMEBnbWFpbC5jb20=">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">Email</span>
+        </a>
+        <a class="link" href="https://matrix.to/#/@charlesvcs:matrix.org" target="_blank" rel="noreferrer">
+          <span class="link-mark" aria-hidden="true">▸</span>
+          <span class="link-label">Matrix</span>
+        </a>
+      </div>
+    </nav>
+  </main>
+  <div class="card card-face card-face--back" aria-hidden="true">
+    <div class="license-header">
+      <span class="license-chip"></span>
+      <span class="license-label">License</span>
+    </div>
+    <div class="license-mark">
+      <span class="license-diamond"></span>
+      <img class="enac-mark" src="enac-mark.png" alt="" width="796" height="694">
+      <span class="license-diamond"></span>
+    </div>
+    <div class="license-footer">
+      <span class="license-id">N° 0043 · MCTA</span>
+      <div class="license-strip"></div>
+    </div>
+    <p class="license-caption">Turn it back over</p>
+  </div>
+</div>
+<script src="js/main.js"></script>
+</body>
+</html>
