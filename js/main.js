@@ -21,14 +21,62 @@ if (grabTarget && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
 function initGrabbableCard(card) {
   const DRAG_THRESHOLD = 6; // px before a pointerdown counts as a drag, not a click
-  const TILT_SENSITIVITY = 0.22; // deg of depth-tilt per px of drag — unclamped, so
-  // dragging far enough rotates the card all the way past 90°/180° to its back face.
+  // deg of depth-tilt per px of drag — unclamped, so dragging far enough rotates the
+  // card all the way past 90°/180° to its back face. Recomputed per-gesture (not a
+  // fixed constant): a thumb's drag range on a phone is only a few hundred px, far
+  // less than a mouse's on a desktop monitor, so a flat px→deg ratio that works on
+  // desktop makes a full flip physically impossible on a small screen. Instead this
+  // targets "dragging ~85% of the shorter viewport dimension completes a 180° flip,"
+  // which scales the gesture to whatever room is actually available.
+  let tiltSensitivity = computeTiltSensitivity();
   const DRIFT_SENSITIVITY = 0.12; // the card only drifts a fraction of the drag distance —
   // turning it is meant to read as flipping in place, not flying it across the screen.
   const MAX_DRIFT = 46; // px, hard cap on how far off-center that drift can go.
   const STIFFNESS = 140;
   const DAMPING = 22;
   const REST_EPSILON = 0.05;
+
+  function computeTiltSensitivity() {
+    const flipRange = Math.min(window.innerWidth, window.innerHeight, 900) * 0.85;
+    return 180 / flipRange;
+  }
+
+  const SPARK_SPACING = 16; // px of drag distance between spawned sparks
+  const SPARK_MAX = 24; // concurrent cap, so a long fast drag can't flood the DOM
+  let sparkField = null;
+  let sparkAccum = 0;
+  let lastSparkPx = null;
+  let lastSparkPy = null;
+
+  function spawnSpark(px, py) {
+    if (!sparkField) {
+      sparkField = document.createElement("div");
+      sparkField.className = "spark-field";
+      sparkField.setAttribute("aria-hidden", "true");
+      document.body.appendChild(sparkField);
+    }
+    if (sparkField.childElementCount >= SPARK_MAX) return;
+
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const angle = Math.atan2(py - cy, px - cx) + (Math.random() - 0.5) * 0.9;
+    const dist = 26 + Math.random() * 34;
+    const size = 5 + Math.random() * 4;
+
+    const spark = document.createElement("span");
+    spark.className = "spark";
+    spark.style.left = px + "px";
+    spark.style.top = py + "px";
+    spark.style.width = size + "px";
+    spark.style.height = size + "px";
+    spark.style.background = Math.random() < 0.5 ? "var(--accent)" : "var(--accent-deep)";
+    spark.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+    spark.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+    spark.style.setProperty("--rot", Math.random() * 180 - 90 + "deg");
+    spark.addEventListener("animationend", () => spark.remove());
+    sparkField.appendChild(spark);
+  }
 
   // The card never snaps straight to the pointer. tx/ty/rx/ry are the rendered
   // state; target* is where the pointer (while held) or the origin (once
@@ -110,6 +158,10 @@ function initGrabbableCard(card) {
     dragging = true;
     moved = false;
     pointerId = event.pointerId;
+    tiltSensitivity = computeTiltSensitivity();
+    sparkAccum = 0;
+    lastSparkPx = event.clientX;
+    lastSparkPy = event.clientY;
 
     startPx = event.clientX;
     startPy = event.clientY;
@@ -140,13 +192,24 @@ function initGrabbableCard(card) {
     // vertical drag leans it around the horizontal axis (rotateX) — both read as
     // the card tipping into screen depth, not spinning flat like a clock hand.
     // Unclamped: drag far enough and it turns all the way over to its back.
-    targetRy = startRy + dx * TILT_SENSITIVITY;
-    targetRx = startRx - dy * TILT_SENSITIVITY;
+    targetRy = startRy + dx * tiltSensitivity;
+    targetRx = startRx - dy * tiltSensitivity;
 
     // Position only drifts a little and is capped — the card stays near center
     // while it turns, so you catch the back face rather than watching it sail off.
     targetTx = clampValue(startTx + dx * DRIFT_SENSITIVITY, -MAX_DRIFT, MAX_DRIFT);
     targetTy = clampValue(startTy + dy * DRIFT_SENSITIVITY, -MAX_DRIFT, MAX_DRIFT);
+
+    // A few small sparks emanate from the card while it's actively being turned —
+    // spawn rate is tied to drag distance (not frame rate), so a fast flick throws
+    // more of them than a slow nudge.
+    sparkAccum += Math.hypot(px - lastSparkPx, py - lastSparkPy);
+    lastSparkPx = px;
+    lastSparkPy = py;
+    while (sparkAccum >= SPARK_SPACING) {
+      spawnSpark(px, py);
+      sparkAccum -= SPARK_SPACING;
+    }
 
     ensureLoopRunning();
   });

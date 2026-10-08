@@ -18,7 +18,7 @@
 3. **Exactly one accent hue family in play at rest.** `--accent` (`#eb3f82`) and `--accent-deep` (`#ff6fa4`) are the *only* saturated colors on the whole site. A new color token is a design decision that needs explicit sign-off, not something to add while building a component.
 4. **The accent never sits in resting-state body text.** It appears only as: (a) the corner marks, (b) the hairline rule under the context line, (c) the hover/focus state of a link, (d) the license-chip/diamond/rank-badge decorations on the card back. If a new component wants to use `--accent`/`--accent-deep` as its *default*, unconditional text color, stop and reconsider — that is the one rule this system treats as load-bearing.
 5. **No gradient as decoration.** The two gradients that exist (`.license-chip`'s contact lines, `.license-strip`'s dash pattern) are 1px-hard-edged linear-gradients used as *line-art/texture substitutes* (a chip's contacts, a magstripe), not color washes. They are the only two gradients allowed to exist as precedent; do not cite them to justify a soft/blurred/multi-stop decorative gradient elsewhere.
-6. **No icon font, no emoji, no third-party icon library.** The only non-text glyphs in the system are the single characters `▸`, `◂`, and the SVG favicon/`enac-mark.png` raster. Any new "icon" need is met by typing a single Unicode glyph in the same restrained register, or by a hairline-stroke inline SVG authored specifically for this site — never a library import.
+6. **No icon font, no emoji, no third-party icon library.** The only non-text glyphs in the system are the single characters `▸`, `◂`, the SVG favicon/`enac-mark.png` raster, and the `.spark` particle (§7.4 — a `clip-path`-drawn shape, not a font glyph or imported icon). Any new "icon" need is met by typing a single Unicode glyph in the same restrained register, or by a hairline-stroke/`clip-path` shape authored specifically for this site — never a library import, never an emoji character standing in for a shape this system can draw itself.
 7. **No shadow DOM, no CSS-in-JS, no utility-class framework (Tailwind etc.).** Hand-written CSS in `css/style.css`, plain class names, kebab-case.
 8. **`prefers-reduced-motion: reduce` must be honored by every new animated/interactive addition.** See §8 and §9 for the exact mechanism already in place; extend it, don't bypass it.
 9. **The email address must never sit as a plaintext `mailto:` anywhere in any HTML source**, and no future contact method may regress this. See §10.4 for the exact pattern.
@@ -195,7 +195,7 @@ Every page's root content element is `.card`. Never ship a page whose root eleme
   color: var(--ink); text-decoration: none;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: var(--label-size); letter-spacing: 0.01em;
-  padding-bottom: 0.2em; cursor: pointer;
+  padding-bottom: 0.2em; white-space: nowrap; cursor: pointer;
 }
 .link-mark { font-size: 0.8em; color: var(--accent); opacity: 0; transform: translateX(-0.4em);
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease; }
@@ -212,6 +212,8 @@ Every page's root content element is `.card`. Never ship a page whose root eleme
 - No `:active` state is defined; don't add one without reason — the hover/focus treatment already covers press feedback adequately for this system's density.
 
 **Modifier:** `.link-inline` (used once, for a link embedded mid-sentence in `.project-desc`): `font-size: 1em; padding-bottom: 0;` — makes the link inherit the surrounding paragraph's size instead of the nav's `--label-size`. Reuse this modifier for any future inline-in-prose link; don't invent a second one.
+
+**`white-space: nowrap` is mandatory on every `.link`/`.back-link` label, not optional polish.** Without it, a long label (`E-Portfolio (English)` is the longest in the system) wraps mid-text on a narrow phone, turning a one-line "button" into two — a shipped-and-fixed regression. The intended narrow-screen behavior is each *whole* link dropping to its own row (handled by `flex-wrap: wrap` on `.links`/`.link-group`, §6.3), never a single link's own text breaking internally.
 
 ### 6.3 Link grouping (`.links` / `.link-group`)
 
@@ -258,7 +260,7 @@ The home page's nav row currently holds 7 links (GitHub / About / Arts / Science
 ```css
 .back-link { display: inline-flex; align-items: center; gap: 0.4em; color: var(--ink-soft);
   text-decoration: none; font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: var(--label-size-sm); letter-spacing: 0.01em; cursor: pointer; }
+  font-size: var(--label-size-sm); letter-spacing: 0.01em; white-space: nowrap; cursor: pointer; }
 .back-link .link-mark { opacity: 1; transform: none; /* always visible — unlike nav .link-mark */
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), color 0.25s ease; }
 .back-link:hover, .back-link:focus-visible { color: var(--accent-deep); }
@@ -431,13 +433,22 @@ The card is not dragged 1:1. It is a continuously-running damped spring that **c
 **Exact constants (`initGrabbableCard`, `js/main.js`):**
 ```js
 const DRAG_THRESHOLD = 6;        // px of pointer movement before a pointerdown counts as a drag, not a click
-const TILT_SENSITIVITY = 0.22;   // deg of rotateX/rotateY per px of drag — UNCLAMPED (can exceed 90°/180°)
+let tiltSensitivity = computeTiltSensitivity(); // deg of rotateX/rotateY per px of drag — see below
 const DRIFT_SENSITIVITY = 0.12;  // translateX/Y moves at only 12% of the raw drag distance
 const MAX_DRIFT = 46;            // px, hard clamp on translateX/Y regardless of drag distance
 const STIFFNESS = 140;
 const DAMPING = 22;              // together: lightly-underdamped, "light but controlled," not floaty
 const REST_EPSILON = 0.05;       // per-axis threshold (px or deg) below which the spring is considered settled
 ```
+
+**`tiltSensitivity` is computed, not a flat constant — this is load-bearing, not an implementation detail:**
+```js
+function computeTiltSensitivity() {
+  const flipRange = Math.min(window.innerWidth, window.innerHeight, 900) * 0.85;
+  return 180 / flipRange;
+}
+```
+Recomputed at the start of every drag gesture (inside `pointerdown`, before `startPx`/`startPy` are captured), targeting "dragging ~85% of the shorter viewport dimension completes a full 180° flip." **Do not revert this to a flat `px → deg` ratio.** A fixed ratio tuned to feel right on a desktop monitor (a mouse has 1000+ px of travel available) makes a full flip *physically impossible* on a phone, whose entire screen is often under 400px wide and whose drag range is a thumb's reach, not a mouse's. This was a shipped-and-fixed bug: on first mobile testing the card could tilt but never reach the back face. Measured sensitivity at common viewports (clamped at 900px on the long side, so a giant monitor doesn't require an absurd drag either): iPhone-class portrait (~375–390px) → ≈0.54–0.57 deg/px (≈320–330px drag for a full flip); desktop (≥900px) → ≈0.235 deg/px (≈765px drag), barely different from the flat `0.22` this replaced. **If a future change needs a different "how much of the screen should a full flip cost" feel, change the `0.85` factor — never reintroduce a hardcoded `deg/px` number.**
 
 **Per-frame integration (semi-implicit Euler, applied identically to all four axes `tx, ty, rx, ry`):**
 ```js
@@ -451,8 +462,8 @@ el.style.transform = `translate(${tx}px, ${ty}px) rotateX(${rx}deg) rotateY(${ry
 
 **Target derivation while dragging** (pointermove, after the 6px threshold is crossed):
 ```js
-targetRy = startRy + dx * TILT_SENSITIVITY;                              // unclamped — can flip past 90°/180°
-targetRx = startRx - dy * TILT_SENSITIVITY;
+targetRy = startRy + dx * tiltSensitivity;                              // unclamped — can flip past 90°/180°
+targetRx = startRx - dy * tiltSensitivity;
 targetTx = clamp(startTx + dx * DRIFT_SENSITIVITY, -MAX_DRIFT, MAX_DRIFT); // clamped — stays near-centered
 targetTy = clamp(startTy + dy * DRIFT_SENSITIVITY, -MAX_DRIFT, MAX_DRIFT);
 ```
@@ -465,6 +476,35 @@ targetTy = clamp(startTy + dy * DRIFT_SENSITIVITY, -MAX_DRIFT, MAX_DRIFT);
 **Accessibility gate:** the entire system — event listeners, pointer capture, the whole physics loop — is skipped at setup time when `window.matchMedia("(prefers-reduced-motion: reduce)").matches`. Not "attached but animations shortened" — *not attached at all*. The card remains a static, non-interactive `.card`/`.flip-card` for those users; no keyboard equivalent exists or is expected, because no link or content depends on the gesture (the back face is purely decorative).
 
 **If a future component wants similar physical drag behavior:** reuse this exact spring model (same constants are a reasonable default; retune `STIFFNESS`/`DAMPING` deliberately if the object has a different implied "weight," but keep the chase-a-moving-target architecture and the deferred-pointer-capture rule).
+
+### 7.4 Spark particle effect — small stars emanating from the card while it turns
+
+While the card is actively being dragged (`moved === true`, i.e. past the 6px threshold — never during the automatic spring-back after release), small accent-colored star particles spawn near the pointer and fly outward, fading and shrinking, then remove themselves. This is a deliberate, explicitly-requested embellishment (a "Mario Sunshine shine-get" reference) layered on top of the physics in §7.3 — it does not replace or alter that spring model, it only reads from the live pointer position while it's running.
+
+**Markup/CSS (`css/style.css`):**
+```css
+.spark-field { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+.spark {
+  position: fixed; left: 0; top: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 39% 65%, 0% 50%, 39% 35%);
+  pointer-events: none;
+  animation: spark-fly 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes spark-fly {
+  from { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1); }
+  to   { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot, 0deg)) scale(0.25); }
+}
+```
+The star is an 8-point sparkle drawn with `clip-path` — a plain, filled, single-color shape (no stroke, no gradient, no font glyph). `--dx`/`--dy`/`--rot` are per-instance custom properties set inline in JS, not in the stylesheet — this is why the keyframe reads them with a fallback (`var(--rot, 0deg)`) rather than declaring them in `:root`.
+
+**Spawn logic (`initGrabbableCard`, `js/main.js`):**
+- `sparkField` (a `.spark-field` div) is created lazily on first use and appended to `document.body` — not inside `.flip-card`/`.card` — because a spark must fly in flat screen space; a child of the card would inherit the card's live `rotateX`/`rotateY`/`perspective` and get dragged into its 3D tilt instead of floating free over it.
+- Spawn rate is gated by **cumulative drag distance**, not elapsed time: `sparkAccum` accumulates `Math.hypot(px - lastSparkPx, py - lastSparkPy)` every `pointermove`, and a spark spawns every `SPARK_SPACING = 16`px of that accumulated distance (a `while` loop catches up if one event covers more than one spacing-worth, e.g. a fast flick). This means a slow nudge emits a trickle and a fast flick emits a burst, without depending on frame rate.
+- Each spark spawns at the **current pointer position**, with an outward direction computed as the angle from the card's live center (`getBoundingClientRect()`) to the pointer, jittered by up to ±0.45 rad, at a random distance of 26–60px and a random size of 5–9px. Color alternates randomly between `var(--accent)` and `var(--accent-deep)` — both are the one accent hue (§1.3), so this stays compliant with the One Accent Rule; it is not a second color.
+- `SPARK_MAX = 24` caps concurrent particles — a spawn attempt is silently dropped (not queued) once the field holds that many, so a very long drag can't accumulate an unbounded number of DOM nodes.
+- Each spark removes itself via its own `animationend` listener. There is no manual cleanup pass and no `setTimeout`-based removal — the animation's own completion is the only lifecycle signal.
+- **Accessibility:** inherits the same gate as the rest of §7.3 — `spawnSpark` is only ever called from inside the `pointermove` handler of `initGrabbableCard`, which is never attached under `prefers-reduced-motion: reduce`. No separate guard is needed or should be added; do not call `spawnSpark` from any code path that isn't already behind that gate.
+- **If reused elsewhere:** keep the "spawn into a fixed-position overlay on `body`, not into the transformed element" rule — it's the one non-obvious part of this effect, and skipping it is what makes particles rotate into the card's depth-tilt instead of reading as emanating from it in flat screen space.
 
 ---
 
@@ -514,7 +554,7 @@ The entrance choreography and the hover reveals are the *only* two motion ideas 
 ## 9. Shapes & elevation
 
 - **Shapes:** square corners, full stop (§1, §4). The only non-rectilinear shape in the system is the `rotate(45deg)` square used as a diamond (`.license-diamond`) — a rotated square is still "no border-radius," so it's compliant; a true circle/rounded shape is not.
-- **Elevation:** flat. No shadow, no blur, no backdrop-filter, no z-index stacking beyond the implicit DOM order (`z-index` appears zero times in the stylesheet — don't introduce it casually; the flip-card's face-stacking is solved by 3D transform + `backface-visibility`, not by `z-index`). Depth is implied only by: the 1px border, the two corner marks, and (on `index.html`) the literal 3D rotation of the card itself.
+- **Elevation:** flat. No shadow, no blur, no backdrop-filter, no z-index stacking beyond the implicit DOM order — with exactly one exception: `.spark-field` (§7.4) carries `z-index: 10` because it's a `position: fixed` overlay that must paint above the card, and the implicit DOM order (it's appended to `body` after the fact) doesn't guarantee that on its own. The flip-card's own face-stacking is still solved by 3D transform + `backface-visibility`, not by `z-index` — don't reach for `z-index` for that or any other depth problem; it belongs only to the one fixed-overlay case. Depth is otherwise implied only by: the 1px border, the two corner marks, and (on `index.html`) the literal 3D rotation of the card itself.
 
 ---
 
@@ -573,6 +613,9 @@ Any content the site owner hasn't supplied yet (a real link, a real number, a re
 - A left-aligned text block inside `.card` without an explicit, deliberate reason overriding the inherited `text-align: center` (and if overridden, it must be scoped tightly, not applied to `.card` globally).
 - A fabricated-looking placeholder value presented without the TODO-comment flag (see §10.4).
 - Any animation/transition added without a matching entry in the `prefers-reduced-motion: reduce` block (§8.3).
+- A `.link`/`.back-link` label missing `white-space: nowrap` (see §6.2/§6.5) — causes mid-label wrap on narrow phones instead of the intended whole-link row-wrap.
+- A flat, device-independent `px → deg` drag-sensitivity constant on any new touch/pointer-drag interaction (see §7.3's `computeTiltSensitivity`) — it makes the gesture's full range unreachable on small screens. Scale sensitivity from the live viewport size instead.
+- Spawning a decorative particle (or anything meant to read in flat screen space) as a child of an element carrying a live 3D `transform` — it inherits that transform instead of floating free (see §7.4).
 
 ---
 
