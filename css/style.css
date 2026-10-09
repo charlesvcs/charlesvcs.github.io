@@ -509,6 +509,31 @@ body {
   color: var(--ink-soft);
 }
 
+/* Third-party badge (Netlify deploy status): can't be redrawn in the site's own
+   geometry — same "content, not a site-UI color choice" exception as enac-mark,
+   §DESIGN_DIRECTIVE. Kept quiet by default (grayscale, fine-print opacity) so its
+   own colors/pill shape don't compete with the one accent; full color is reserved
+   for hover/focus, the same register every other link's accent lives in. */
+.deploy-status {
+  display: inline-block;
+  margin-top: 0.6rem;
+  line-height: 0;
+}
+
+.deploy-status-badge {
+  height: 14px;
+  width: auto;
+  filter: grayscale(1) brightness(1.1) contrast(0.95);
+  opacity: 0.55;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.deploy-status:hover .deploy-status-badge,
+.deploy-status:focus-visible .deploy-status-badge {
+  opacity: 1;
+  filter: none;
+}
+
 .spark-field {
   position: fixed;
   inset: 0;
