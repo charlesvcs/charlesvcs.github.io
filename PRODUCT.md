@@ -51,7 +51,7 @@ No real project content, testimonials, or CV copy supplied yet.
 
 `sciences.html` (renamed from `maths.html` by user request, same content) is a page for his own revision sheets and exercise sheets, aimed at curious visitors — currently "coming soon" placeholders, since the actual files haven't been supplied yet.
 
-`arts.html` is a new page (confirmed by user, no content specified yet) — currently a single honest "coming soon" placeholder. Charles still needs to say what it should actually list (sketches, photography, music, etc.).
+`arts.html` now lists one real entry: **Rebondis Bulles**, a 16×16 sliding-puzzle game (confirmed by user, 2026-10-09), linking out to `../rebondis-bulles/index.html` (a sibling project directory, restyled to this same design system in the same pass). Charles may still add further entries (sketches, photography, music, etc.).
 
 ## Product Principles
 

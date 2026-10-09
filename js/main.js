@@ -141,9 +141,18 @@ function initGrabbableCard(card) {
     }
   }
 
-  card.style.touchAction = "none";
+  // index.html's .flip-card is the only grab target with nothing to scroll past
+  // (it's a single short screen), so it alone can claim every touch gesture. The
+  // other pages reuse this same interaction on their plain .card, but their content
+  // can run longer than one screen — touch-action: none there would silently make
+  // the page unscrollable by touch the moment content overflows, since the browser
+  // would never get to start a native pan on a touch that begins inside the card.
+  // pan-y keeps vertical swipes as ordinary scrolling and still lets pointer events
+  // drive the tilt for drags the browser doesn't claim as a scroll (horizontal, or
+  // a mouse drag, which ignores touch-action entirely).
+  card.style.touchAction = card.classList.contains("flip-card") ? "none" : "pan-y";
 
-  // Links and the mascot image are natively draggable in most browsers; that fights
+  // Links and images are natively draggable in most browsers; that fights
   // with our own pointer-driven drag, so it's switched off inside the card.
   card.addEventListener("dragstart", (event) => event.preventDefault());
 
