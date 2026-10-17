@@ -100,6 +100,7 @@ Six named size roles, each a CSS custom property (`:root` in `css/style.css`) ra
 
 Five pages, same frame:
 - **`index.html`** — single full-bleed viewport, the bordered card centered both horizontally and vertically (flex-centered body, `min(660px, 100%)` card capped width, `1.5rem` body padding as the small-screen gutter), every element inside centered on the card's own axis. The card width (560→600→660px across three revisions) and the nav row's gaps (`.links` 0.6rem, `.link-group` 0.75rem, divider padding 0.6rem) are both sized to keep all seven links — GitHub/About/Arts/Sciences/MCTA/Email/Matrix — on one row at ordinary desktop widths; measured against real JetBrains Mono metrics, the row needs ~539px and the card offers ~572px even at max padding. Re-measure before adding an 8th link — see `DESIGN_DIRECTIVE.md` §6.4 for the exact method.
+- **`code.html`** — the "GitHub" link's destination (it no longer leaves the site directly): the Celcat EDT project (one sentence + a `Source` inline link + three run-your-own steps) and the GitHub activity readout, ending on a `GitHub profile` link.
 - **`about.html`** / **`arts.html`** / **`sciences.html`** / **`projects.html`** — the "About," "Arts," "Sciences," and "MCTA" links' destinations; same card frame, a back-link to the identity card, a page title, and a short label-register list. `about.html` carries facts plus the CTF Leaderboard; `sciences.html` (renamed from `maths.html`) carries two "coming soon" placeholders for revision/exercise sheets; `arts.html` carries one real entry (Rebondis Bulles, linking to a sibling project restyled to this same system) and may grow more; `projects.html` carries two real-destination links (E-Portfolio, MCTA25C) rather than invented project copy. Reached, never shown inline — the identity card stays one viewport, exactly as v1 intended.
 
 Vertical rhythm inside the card is unchanged from v1: name row → 0.9rem → context line → 1.9rem (rule) → 1.6rem → link row.
@@ -124,6 +125,12 @@ A menu row rather than a measured readout: a selector glyph (`▸`) hidden at re
 
 ### Leaderboard (`about.html`)
 A scoreboard reading, kept inside the same label-register and centered-card discipline as everything else: a bordered rank badge (`.leaderboard-rank`, 1px Accent border, `--label-size-xs`, Accent Deep text) above an event line (`--label-size-sm`, Ink) and a result line (`--label-size-xs`, Ink Soft) — stacked and centered, not a left-aligned table. Currently one entry (Orion / Bellatrix); built as an `<ol>` so more can be added without a new component.
+
+### Project steps (`code.html`)
+`.project-steps`: a short centered `<ol>` in `--label-size-xs`, Ink Soft, each line led by its number as a dim sibling `<span class="project-step-n">` (never `::before`). The only place numbering is allowed: the sequence itself is the information.
+
+### Activity readout (`code.html`)
+A 13-week × 7-day grid of square cells (`.activity-grid` / `.activity-cell`, `--cell: clamp(7px, 1.7vw, 10px)`, 3px gap), filled from the public GitHub events API client-side (`js/main.js`, cached 10 min in sessionStorage). Cell levels are **Ink tints** (9 / 32 / 58 / 88 %), never the accent — the grid is resting content. Accent Deep appears only on cell hover. Below it, `.activity-log`: up to four latest actions in `--label-size-xs` (verb in Ink Soft, repo in Ink, relative time dimmed). Fails quietly to "Activity unavailable right now." The API keeps ~90 days of public events, which is why the grid stops at 13 weeks.
 
 ### Card frame
 - 1px solid hairline border (`color-mix(in srgb, var(--ink) 18%, transparent)`) around the whole card.

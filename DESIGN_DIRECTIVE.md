@@ -598,6 +598,12 @@ Any content the site owner hasn't supplied yet (a real link, a real number, a re
 
 ---
 
+### 6.11 Project steps & activity readout (`code.html`)
+
+See DESIGN.md › Components. Contract: `.project-steps` numbers are sibling spans in the dimmed Ink Soft mix; `.activity-cell` levels use `color-mix(in srgb, var(--ink) N%, transparent)` only, Accent Deep on `:hover` only, square, no radius; `.activity-cell` transition is listed in the reduced-motion block. Data comes from `https://api.github.com/users/<user>/events/public` (no token, 60 req/h per visitor) — never embed a token in this static site.
+
+---
+
 ## 11. Forbidden patterns — explicit, zero-tolerance list for any future generation pass
 
 - Any `border-radius` other than `0`.

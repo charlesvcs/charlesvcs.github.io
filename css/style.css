@@ -311,7 +311,8 @@ body {
   }
 
   .link-mark,
-  .link::after {
+  .link::after,
+  .activity-cell {
     transition: none;
   }
 }
@@ -379,6 +380,85 @@ body {
   font-size: var(--label-size-sm);
   line-height: 1.55;
   color: var(--ink-soft);
+}
+
+/* Run-your-own steps under a project: the sequence is the information, so the
+   numbers stay — as dim sibling spans, never ::before (§3.4.3). */
+.project-steps {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.project-step-n {
+  color: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+  padding-right: 0.6em;
+}
+
+/* GitHub activity readout: 13 weeks × 7 days of square cells in ink tints
+   (no accent at rest — §1.4), then the latest few events as label lines. */
+.activity {
+  --cell: clamp(7px, 1.7vw, 10px);
+  margin: 0.4rem 0 1rem;
+}
+
+.activity-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, var(--cell));
+  grid-auto-columns: var(--cell);
+  gap: 3px;
+  justify-content: center;
+}
+
+.activity-cell {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  transition: background-color 0.2s ease;
+}
+
+.activity-cell[data-level="1"] { background: color-mix(in srgb, var(--ink) 32%, transparent); }
+.activity-cell[data-level="2"] { background: color-mix(in srgb, var(--ink) 58%, transparent); }
+.activity-cell[data-level="3"] { background: color-mix(in srgb, var(--ink) 88%, transparent); }
+
+.activity-cell[data-future] {
+  background: none;
+}
+
+.activity-cell:hover {
+  background: var(--accent-deep);
+}
+
+.activity-log {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-xs);
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.activity-repo {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.activity-when {
+  color: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+  padding-left: 0.6em;
+  white-space: nowrap;
 }
 
 .leaderboard-list {

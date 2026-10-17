@@ -9,6 +9,142 @@ if (emailLink) {
   });
 }
 
+// code.html: public GitHub activity, read client-side from the REST events
+// API (no token, 60 req/h per visitor — cached in sessionStorage for 10 min).
+// The API only keeps ~90 days of public events, hence a 13-week grid.
+const activity = document.getElementById("activity");
+
+if (activity) {
+  renderActivity(activity, activity.dataset.user);
+}
+
+async function renderActivity(root, user) {
+  const WEEKS = 13;
+  const grid = root.querySelector(".activity-grid");
+  const log = root.querySelector(".activity-log");
+  const dayKey = (d) => d.toISOString().slice(0, 10);
+
+  // Columns are weeks (Monday first), the last one holding today.
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setUTCDate(start.getUTCDate() - ((today.getUTCDay() + 6) % 7) - (WEEKS - 1) * 7);
+  const cells = new Map();
+  for (let i = 0; i < WEEKS * 7; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    const cell = document.createElement("span");
+    cell.className = "activity-cell";
+    if (d > today) cell.dataset.future = "";
+    grid.appendChild(cell);
+    cells.set(dayKey(d), cell);
+  }
+
+  let events;
+  try {
+    events = await fetchEvents(user);
+  } catch (err) {
+    log.innerHTML = "";
+    log.appendChild(logItem("Activity unavailable right now."));
+    return;
+  }
+
+  const perDay = new Map();
+  for (const e of events) {
+    const key = e.created_at.slice(0, 10);
+    perDay.set(key, (perDay.get(key) || 0) + 1);
+  }
+  const fmtDay = new Intl.DateTimeFormat("en", { day: "numeric", month: "short", timeZone: "UTC" });
+  for (const [key, cell] of cells) {
+    const n = perDay.get(key) || 0;
+    if (n) cell.dataset.level = n >= 6 ? 3 : n >= 3 ? 2 : 1;
+    cell.title = `${n} event${n === 1 ? "" : "s"} · ${fmtDay.format(new Date(key))}`;
+  }
+  const total = events.length;
+  grid.setAttribute("aria-label", `${total} public GitHub event${total === 1 ? "" : "s"} over the last ${WEEKS} weeks`);
+
+  // Latest distinct actions: one line per (action, repo, day).
+  log.innerHTML = "";
+  const seen = new Set();
+  const sorted = [...events].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  for (const e of sorted) {
+    const action = describeEvent(e);
+    if (!action) continue;
+    const repo = e.repo.name.replace(`${user}/`, "");
+    const key = `${action}|${repo}|${e.created_at.slice(0, 10)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    log.appendChild(logItem(action, repo, relativeTime(new Date(e.created_at))));
+    if (seen.size === 4) break;
+  }
+  if (!seen.size) log.appendChild(logItem("No public activity in the last weeks."));
+}
+
+async function fetchEvents(user) {
+  const KEY = `gh-events:${user}`;
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(KEY) || "null");
+    if (cached && Date.now() - cached.at < 10 * 60 * 1000) return cached.events;
+  } catch (err) {
+    // storage unavailable: just fetch
+  }
+  const resp = await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/events/public?per_page=100`, {
+    headers: { Accept: "application/vnd.github+json" },
+  });
+  if (!resp.ok) throw new Error(`GitHub ${resp.status}`);
+  const events = await resp.json();
+  try {
+    sessionStorage.setItem(KEY, JSON.stringify({ at: Date.now(), events }));
+  } catch (err) {
+    // storage full or blocked: fine, next visit refetches
+  }
+  return events;
+}
+
+function describeEvent(e) {
+  const p = e.payload || {};
+  switch (e.type) {
+    case "PushEvent": return "pushed to";
+    case "CreateEvent": return p.ref_type === "repository" ? "created" : null;
+    case "PublicEvent": return "published";
+    case "ReleaseEvent": return "released";
+    case "ForkEvent": return "forked";
+    case "WatchEvent": return "starred";
+    case "PullRequestEvent": return p.action === "opened" ? "opened a PR on" : null;
+    case "IssuesEvent": return p.action === "opened" ? "opened an issue on" : null;
+    default: return null;
+  }
+}
+
+function logItem(text, repo, when) {
+  const li = document.createElement("li");
+  li.className = "activity-item";
+  li.append(text);
+  if (repo) {
+    const r = document.createElement("span");
+    r.className = "activity-repo";
+    r.textContent = ` ${repo}`;
+    li.appendChild(r);
+  }
+  if (when) {
+    const w = document.createElement("span");
+    w.className = "activity-when";
+    w.textContent = when;
+    li.appendChild(w);
+  }
+  return li;
+}
+
+function relativeTime(date) {
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const s = (date - Date.now()) / 1000;
+  const steps = [["day", 86400], ["hour", 3600], ["minute", 60]];
+  for (const [unit, size] of steps) {
+    if (Math.abs(s) >= size) return rtf.format(Math.round(s / size), unit);
+  }
+  return "just now";
+}
+
 // The index.html identity card is two stacked faces (front/back) wrapped in
 // .flip-card so it can be grabbed and turned all the way over, like a credit
 // card flipped to its back. about.html/projects.html have no back face, so
