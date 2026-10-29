@@ -130,7 +130,7 @@ There is no formal spacing scale (no `--space-1..n` tokens) — spacing is autho
 `0.2em` `0.3em` `0.35em` `0.4em` `0.4rem` `0.6rem` `0.75rem` `0.8rem` `0.9rem` `1rem` `1.1rem` `1.25rem` `1.4rem` `1.5rem` `1.6rem` `1.75rem` `1.9rem` — plus the responsive paddings `clamp(1.75rem, 4vw, 2.5rem)` (card vertical padding) and `clamp(1.75rem, 4.5vw, 2.75rem)` (card horizontal padding).
 
 Geometry constants:
-- Card width: `min(660px, 100%)` — on both `.flip-card` and `.card`. (Raised twice — `560px`→`600px`→`660px` — each time so the nav row would fit one line at desktop widths as links were added/renamed; see §6.4 for the current arithmetic. Don't shrink it back without re-deriving that fit.)
+- Card width: `min(780px, 100%)` — on both `.flip-card` and `.card`. (Raised three times — `560px`→`600px`→`660px`→`780px` — each time so the nav row would fit one line at desktop widths as links were added/renamed; the last raise accompanied the "ENAC" tab and the ENAC › Anglais › EPortfolio page tree; see §6.4 for the current arithmetic. Don't shrink it back without re-deriving that fit.)
 - Card border: `1px solid var(--border)`.
 - Corner marks: `14px × 14px`, offset `-7px` (i.e. straddling the border), `1px solid var(--accent)`.
 - Body side-gutter on narrow screens: `padding: 1.5rem` on `body`.
@@ -145,7 +145,7 @@ Geometry constants:
 - `body` is `display: flex; align-items: center; justify-content: center; min-height: 100vh;` — every page is one element (`.flip-card` on index, `.card` on the three sub-pages) centered in the viewport, both axes, always.
 - `perspective: 1100px` lives on `body` (not on the card) so the 3D depth-tilt of the flip-card has a stable vanishing point regardless of the card's own transform.
 - Inside the card: a simple vertical stack, centered (`text-align: center` + flex children where needed). No grid-based page layout exists or should be introduced for a content page — a second column, a sidebar, a grid of cards: none of that exists in this system and a request for one is a request to invent new layout language, which needs explicit direction, not silent improvisation.
-- Five pages, same frame: `index.html` (the identity card, two-faced — see §7), `about.html`, `arts.html`, `sciences.html`, `projects.html` (all four sub-pages are single-face `.card` with a `.back-link`, a `.page-title`, a `.context` line, a `.rule`, and then page-specific content).
+- Five core pages, same frame: `index.html` (the identity card, two-faced — see §7), `about.html`, `arts.html`, `sciences.html`, `projects.html` (all four sub-pages are single-face `.card` with a `.back-link`, a `.page-title`, a `.context` line, a `.rule`, and then page-specific content). A deeper school tree hangs off the nav's "ENAC" tab: `enac.html` › `anglais.html` › `eportfolio.html` (same frame; see §6.12 for the e-portfolio components and §6.5 for the parent-facing back-link variant).
 
 ---
 
@@ -236,18 +236,19 @@ Every page's root content element is `.card`. Never ship a page whose root eleme
 ```
 Links are **always** grouped by function (e.g. identity links vs. contact links), never a single flat row once there are ≥2 functional clusters. The divider between groups is this exact `border-left` + `padding-left` pattern — never a bare larger `gap` standing in for a divider.
 
-### 6.4 Nav-row fit budget (read before adding an 8th link to `index.html`)
+### 6.4 Nav-row fit budget (read before adding another link to `index.html`)
 
-The home page's nav row currently holds 7 links (GitHub / About / Arts / Sciences / MCTA / Email / Matrix) across two groups: group 1 = GitHub/About/Arts/Sciences/MCTA (5 links, 4 internal gaps), group 2 = Email/Matrix (2 links, 1 internal gap). Measured against real JetBrains Mono metrics at `0.95rem` (the desktop-resolved value of `--label-size`):
+The home page's nav row currently holds 9 links (GitHub / About / Arts / Sciences / ENAC / MCTA / Email / Matrix / Legal) across two groups: group 1 = GitHub/About/Arts/Sciences/ENAC/MCTA (6 links, 5 internal gaps), group 2 = Email/Matrix/Legal (3 links, 2 internal gaps). Measured against real JetBrains Mono metrics at `0.95rem` (the desktop-resolved value of `--label-size`), replicating §6.4's arithmetic with the shipped `fonts/jetbrains-mono-latin.woff2`:
 
-- Per-link content width (label + reserved mark space) sums to **~459.8px** across all 7 links (the renamed "Sciences" is the longest single label at ~74.3px — about the same as "GitHub"/"Matrix").
-- Internal gaps (`.link-group` gap `0.75rem`=12px × 5 gaps) = **60px**.
-- Between-group spacing (`.links` gap `0.6rem`=9.6px + divider `padding-left` `0.6rem`=9.6px) = **~19.2px**.
-- Total row: **~539px**.
-- Available content width at `.card`'s max padding (`660px` card − `2×44px` padding): **~572px**.
-- Margin: **~33px**.
+- Mark space (the always-in-DOM `▸` glyph at `0.8em` + the `0.4em` flex gap) ≈ **13.4px per link**; per-char advance at 15.2px ≈ **9.27px** including the `0.01em` tracking.
+- Group 1: 27 label chars ≈ 250.3px + 6 × 13.4px mark space + 5 × 12px gaps ≈ **413px**.
+- Group 2: 16 label chars ≈ 148.3px + 3 × 13.4px + 2 × 12px gaps ≈ **211px**.
+- Between-group spacing (`.links` gap `0.6rem`=9.6px + divider `padding-left` `0.6rem`=9.6px) = **19.2px**.
+- Total row: **~643px**.
+- Available content width at `.card`'s max padding (`780px` card − `2×44px` padding): **~692px**.
+- Margin: **~49px**.
 
-**Before adding link #8:** recompute this with the real method (measure actual glyph widths for the real font at the real desktop-resolved size — don't eyeball it; a Python script using `PIL.ImageFont.getbbox` against the installed `JetBrainsMono-Regular.otf`, replicating §6.4's own arithmetic, is how every revision of this budget was actually verified). A new ~6-character label costs roughly `45px` of content plus one more `12px` internal gap ≈ `57px`, which would already overrun the current ~33px margin. Options, in order of preference: (a) shorten an existing label before adding a new long one, (b) widen the card again (and re-verify §4's geometry note and re-run this arithmetic), or (c) accept and *intend* a two-line wrap (and then also retune the `@media (max-width: 420px)` gaps to match the new intent). Don't add an 8th link without doing this arithmetic — "looks like it still fits" at one window width is how the original regression happened, twice.
+History: at `660px` the row was already ~596px against ~572px of room (the "Legal" link postdated the previous audit), so the shipped site was silently wrapping to two lines on desktop; the `780px` raise accompanied the "ENAC" tab and restored the single-line fit. **Before adding link #10:** re-run this arithmetic with the real font (a Python script using `fontTools` + `PIL.ImageFont.getlength` against the shipped woff2 is how this revision was verified — `scripts/nav_fit.py` pattern). A new ~6-character label costs roughly `68px` (content + one internal gap); options, in order of preference: (a) shorten an existing label before adding a new long one, (b) widen the card again (and re-verify §4's geometry note and re-run this arithmetic), or (c) accept and *intend* a two-line wrap (and then also retune the `@media (max-width: 420px)` gaps to match the new intent). Don't add a link without doing this arithmetic.
 
 ### 6.5 Back-link (`.back-link`) — sub-page return navigation
 
@@ -268,7 +269,9 @@ The home page's nav row currently holds 7 links (GitHub / About / Arts / Science
 ```
 Reuses the `.link-mark` class but **overrides it to always-visible** (`opacity:1`), because here the `◂` is a permanent part of the phrase ("go back"), not a hover-reveal selector cue. This is the one place `.link-mark`'s resting state is intentionally overridden — don't generalize that override elsewhere.
 
-Every sub-page's first content element, immediately inside `.card`, is this exact back-link to `index.html`, with the literal text `CharlesVCS` (the site's display name — update only if the name itself changes, per `PRODUCT.md`).
+Every top-level sub-page's first content element, immediately inside `.card`, is this exact back-link to `index.html`, with the literal text `CharlesVCS` (the site's display name — update only if the name itself changes, per `PRODUCT.md`).
+
+**Nested pages (`anglais.html`, `eportfolio.html`):** the back-link keeps the exact same component and styling, but points at the *parent* page and carries the parent's name as its text (`◂ ENAC` on `anglais.html`, `◂ Anglais` on `eportfolio.html`) — a three-level tree needs return-to-parent, and `index.html` stays reachable one click further up. The hierarchy is also restated in each page's `.context` line (`ENAC / Anglais`). This is the one sanctioned variant of the back-link's target/text; don't invent breadcrumb components on top.
 
 ### 6.6 Page header block (sub-pages)
 
@@ -601,6 +604,44 @@ Any content the site owner hasn't supplied yet (a real link, a real number, a re
 ### 6.11 Project steps & activity readout (`code.html`)
 
 See DESIGN.md › Components. Contract: `.project-steps` numbers are sibling spans in the dimmed Ink Soft mix; `.activity-cell` levels use `color-mix(in srgb, var(--ink) N%, transparent)` only, Accent Deep on `:hover` only, square, no radius; `.activity-cell` transition is listed in the reduced-motion block. Data comes from `https://api.github.com/users/<user>/events/public` (no token, 60 req/h per visitor) — never embed a token in this static site.
+
+### 6.12 E-Portfolio subdivisions & slots (`.ef-*` family, `eportfolio.html`)
+
+The page stacks four subdivision sections (AG / AAS / Tutorials / Self-Study), each holding bordered content slots ("encarts"). This is the sanctioned container language: 1px `var(--border)` hairline, zero radius, zero shadow, no new colors, no new type tokens.
+
+```html
+<div class="ef-sections">
+  <section class="ef-section">
+    <h2 class="ef-section-title">AG</h2>
+    <ul class="ef-list">
+      <li class="ef-panel">
+        <h3 class="project-title">Slot title</h3>
+        <p class="project-desc">Slot body text.</p>
+      </li>
+    </ul>
+  </section>
+</div>
+```
+
+```css
+.ef-sections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.9rem; }
+.ef-section { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.ef-section-title { margin: 0; font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--label-size-title); font-weight: 500; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--ink); }
+.ef-list { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+.ef-panel { border: 1px solid var(--border); padding: 1.25rem clamp(1.1rem, 3vw, 1.4rem);
+  display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+.ef-panel .project-title, .ef-panel .project-desc { margin: 0; }
+```
+
+- `.ef-section-title` recombines existing registers only: the all-caps tag tracking (`0.22em`, as `.license-label`) at the `.project-title` size/weight, in `--ink`. It is the hierarchy level *above* a slot title; slot titles reuse `.project-title` verbatim (its `--accent-deep` resting color is that component's established exception, §6.7).
+- **PDF slot:** `<iframe class="ef-pdf" src="pdf/<slug>.pdf" title="...">` plus an `Open the PDF` `.link-inline` fallback (iOS Safari doesn't render PDFs in iframes). `.ef-pdf { display:block; width:100%; height: clamp(320px, 55vw, 440px); border: 1px solid var(--border); background: var(--bg); }`. Placeholder PDFs live in `pdf/` and are visibly marked "Placeholder file" inside; each carries a `<!-- TODO(charles): ... -->` flag (§10.4).
+- **Podcast slot:** `<audio class="ef-audio" controls preload="none" src="audio/<slug>.mp3">`. Native UA controls get the `.deploy-status` treatment (grayscale/dimmed at rest, full on hover/focus); the transition is listed in the reduced-motion block. `preload="none"` so a missing file never fetches until played. Placeholder MP3 in `audio/` (8 s of silence) + visible caption + TODO flag.
+- **Grade slot:** `.ef-grades` (centered flex, `1.5rem` gap, wraps) holding `.ef-grade` pairs: a `.leaderboard-rank` badge (reused verbatim — the sanctioned bordered-badge visual family) over a `.ef-grade-label` fine-print line. Never invent a second badge style for grades.
+- **Link slots (Kahoot, T3):** the `.link` component verbatim inside the panel; unconfirmed URLs ship as `href="#"` with a TODO flag (§10.4).
+- **Nested panel:** a slot may contain a further `.ef-list`/`.ef-panel` (the TOC reflection PDF lives inside the FE Preflight slot) — nesting the same hairline box is the in-system way to express sub-structure; no new container class.
+- Asset folders `pdf/` and `audio/` are the sanctioned exception to flat-root naming (§10.3 covers single root images; these collections need a home and GitHub Pages serves subdirectories as-is).
 
 ---
 
